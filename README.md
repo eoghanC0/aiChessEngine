@@ -1,2 +1,2 @@
 # aiChessEngine
-AI Chess Engine C++
+AI Chess Engine python
