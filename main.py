@@ -41,24 +41,38 @@ for i in range(8):
         elif i == 6:
             rows.append("BP")
         else:
-            rows.append(" ")
+            rows.append("  ")
     columns.append(rows)
 
-for i in range(8):
-    if i != 7:
-        print("      " + str(i), end="")
-    else:
-        print("      " + str(i) + "\n")
 
-for i in range(8):
-    if i == 0 or i == 1 or i == 6 or i == 7:
-        print(str(i) + "    ", end="")
-    else:
-        print(str(i) + "    ")
-    for j in range(8):
-        if j != 7:
-            print(columns[i][j] + "     ", end="")
+def drawboard():
+    for i in range(8):
+        if i != 7:
+            print("      " + str(i), end="")
         else:
-            print(columns[i][j] + "    " + "\n")
+            print("      " + str(i) + "\n")
 
-print("Please enter the coordinates of the piece you are moving, column first, eg. 3,4")
+    for i in range(8):
+        print(str(i) + "    ", end="")
+        for j in range(8):
+            if j != 7:
+                print(columns[i][j] + "     ", end="")
+            else:
+                print(columns[i][j] + "    " + "\n")
+
+
+drawboard()
+inputCoordinates = input("Please enter the coordinates of the piece you are moving, row first, eg. 3,4 \n")
+outputCoordinates = input("Please enter the coordinates of where you wish to move to, row first, eg. 5,4 \n")
+
+
+def movepiece():
+    for i in range(8):
+        for j in range(8):
+            if i == int(inputCoordinates[:1]) and j == int(inputCoordinates[2:]):
+                columns[int(outputCoordinates[:1])][int(outputCoordinates[2:])] = columns[i][j]
+                columns[i][j] = "  "
+
+
+movepiece()
+drawboard()
