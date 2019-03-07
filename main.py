@@ -2,6 +2,7 @@
 columns = []
 whosTurn = 'W'
 validMove = False
+gameOver = False
 
 """ Create an 8*8 array for the board and then fill the correct squares with the pieces according to the row and column
    W = white
@@ -96,22 +97,21 @@ def validmove():
     global inputCoordinates
     global outputCoordinates
 
+    validMove = False
     while validMove == False:
         validMove = True
-        if int(inputCoordinates[:1]) > 0 and int(inputCoordinates[:1]) < 8 and int(inputCoordinates[2:]) > 0 and int(inputCoordinates[2:]) < 8:
+        if int(inputCoordinates[:1]) >= 0 and int(inputCoordinates[:1]) < 8 and int(inputCoordinates[2:]) >= 0 and int(inputCoordinates[2:]) < 8:
             if (columns[int(inputCoordinates[:1])][int(inputCoordinates[2:])])[:1] == whosTurn:
                 validMove = validsquaretomoveto()
             else:
                 print("Please select one of your own pieces")
                 validMove = False
-                inputCoordinates = input("Please enter the coordinates of the piece you are moving, row first, eg. 3,4 \n")
-                outputCoordinates = input("Please enter the coordinates of where you wish to move to, row first, eg. 5,4 \n")
         else:
             print("Please select a piece on the board")
             validMove = False
+        if validMove == False:
             inputCoordinates = input("Please enter the coordinates of the piece you are moving, row first, eg. 3,4 \n")
             outputCoordinates = input("Please enter the coordinates of where you wish to move to, row first, eg. 5,4 \n")
-    print("\n")
 
 
 def validsquaretomoveto():
@@ -119,35 +119,193 @@ def validsquaretomoveto():
     global outputCoordinates
     global inputCoordinates
 
-    if int(outputCoordinates[:1]) > 0 and int(outputCoordinates[:1])< 8 and  int(outputCoordinates[2:]) > 0 and int(outputCoordinates[2:])< 8:
+    if int(outputCoordinates[:1]) >= 0 and int(outputCoordinates[:1])< 8 and  int(outputCoordinates[2:]) >= 0 and int(outputCoordinates[2:])< 8:
         if (columns[int(outputCoordinates[:1])][int(outputCoordinates[2:])])[:1] == whosTurn:
             print("Cannot move to a square with your own piece already on it")
-            outputCoordinates = input("Please enter the coordinates of where you wish to move to, row first, eg. 5,4 \n")
             return False
         else:
             if (columns[int(inputCoordinates[:1])][int(inputCoordinates[2:])])[1:] == "R":
-                print("ROOK")
+                validMove = rookValidMove()
             elif(columns[int(inputCoordinates[:1])][int(inputCoordinates[2:])])[1:] == "N":
-                print("KNIGHT")
+                validMove = knightValidMove()
             elif (columns[int(inputCoordinates[:1])][int(inputCoordinates[2:])])[1:] == "B":
-                print("BISHOP")
+                validMove = bishopValidMove()
             elif (columns[int(inputCoordinates[:1])][int(inputCoordinates[2:])])[1:] == "Q":
-                print("QUEEN")
+                validMove = queenValidMove()
             elif (columns[int(inputCoordinates[:1])][int(inputCoordinates[2:])])[1:] == "K":
-                print("KING")
+                validMove = kingValidMove()
             elif (columns[int(inputCoordinates[:1])][int(inputCoordinates[2:])])[1:] == "P":
-                print("PAWN")
+                validMove = pawnValidMove()
     else:
         print("Cannot move to a square off the board")
-        outputCoordinates = input("Please enter the coordinates of where you wish to move to, row first, eg. 5,4 \n")
+        return False
+    return validMove
+
+
+def rookValidMove():
+    if int(outputCoordinates[:1]) == int(inputCoordinates[:1]) >= 0 or int(outputCoordinates[2:]) == int(inputCoordinates[2:]):
+        return nothingInTheWay()
+    else:
         return False
 
 
+def kingValidMove():
+    if abs(int(outputCoordinates[:1]) - int(inputCoordinates[:1])) >= 0 and abs(int(outputCoordinates[:1]) - int(inputCoordinates[:1])) < 2:
+        if abs(int(outputCoordinates[2:]) - int(inputCoordinates[2:])) >= 0 and abs(int(outputCoordinates[2:]) - int(inputCoordinates[2:])) < 2:
+            return True
+        else:
+            return False
+    else:
+        return False
+
+
+def knightValidMove():
+    if abs(int(outputCoordinates[:1]) - int(inputCoordinates[:1])) == 1 and abs(int(outputCoordinates[2:]) - int(inputCoordinates[2:])) == 2:
+        return True
+    elif abs(int(outputCoordinates[:1]) - int(inputCoordinates[:1])) == 2 and abs(int(outputCoordinates[2:]) - int(inputCoordinates[2:])) == 1:
+        return True
+    else:
+        return False
+
+
+def bishopValidMove():
+    if abs(int(outputCoordinates[:1]) - int(inputCoordinates[:1])) == abs(int(outputCoordinates[2:]) - int(inputCoordinates[2:])):
+        return nothingInTheWay()
+    else:
+        return False
+
+
+def queenValidMove():
+    if bishopValidMove() or rookValidMove():
+        return True
+    else:
+        return False
+
+def pawnValidMove():
+    if whosTurn == 'W':
+        if int(inputCoordinates[:1]) == 1:
+            if int(outputCoordinates[2:]) == int(inputCoordinates[2:]):
+                if int(outputCoordinates[:1]) - int(inputCoordinates[:1]) == 1 or int(outputCoordinates[:1]) - int(inputCoordinates[:1]) == 2:
+                    return True
+                else:
+                    return False
+            else:
+                if int(outputCoordinates[:1]) == 2 and abs(int(outputCoordinates[2:]) - int(inputCoordinates[2:])) == 1:
+                    if columns[int(outputCoordinates[:1])][int(outputCoordinates[2:])][:1] == "B":
+                        return True
+                    else:
+                        return False
+                else:
+                    return False
+        else:
+            if int(outputCoordinates[2:]) == int(inputCoordinates[2:]):
+                if int(outputCoordinates[:1]) - int(inputCoordinates[:1]) == 1:
+                    return True
+                else:
+                    return False
+            else:
+                if int(outputCoordinates[:1]) == int(inputCoordinates[:1]) + 1 and abs(int(outputCoordinates[2:]) - int(inputCoordinates[2:])) == 1:
+                    if columns[int(outputCoordinates[:1])][int(outputCoordinates[2:])][:1] == "B":
+                        return True
+                    else:
+                        return False
+                else:
+                    return False
+    else:
+        if int(inputCoordinates[:1]) == 6:
+            if int(outputCoordinates[2:]) == int(inputCoordinates[2:]):
+                if int(outputCoordinates[:1]) - int(inputCoordinates[:1]) == -1 or int(outputCoordinates[:1]) - int(inputCoordinates[:1]) == -2:
+                    return True
+                else:
+                    return False
+            else:
+                if int(outputCoordinates[:1]) == 5 and abs(int(outputCoordinates[2:]) - int(inputCoordinates[2:])) == 1:
+                    if columns[int(outputCoordinates[:1])][int(outputCoordinates[2:])][:1] == "W":
+                        return True
+                    else:
+                        return False
+                else:
+                    return False
+        else:
+            if int(outputCoordinates[2:]) == int(inputCoordinates[2:]):
+                if int(outputCoordinates[:1]) - int(inputCoordinates[:1]) == -1:
+                    return True
+                else:
+                    return False
+            else:
+                if int(outputCoordinates[:1]) == int(inputCoordinates[:1]) - 1 and abs(int(outputCoordinates[2:]) - int(inputCoordinates[2:])) == 1:
+                    if columns[int(outputCoordinates[:1])][int(outputCoordinates[2:])][:1] == "W":
+                        return True
+                    else:
+                        return False
+                else:
+                    return False
+
+
+def nothingInTheWay():
+    if inputCoordinates[:1] == outputCoordinates[:1]:
+        if int(inputCoordinates[2:]) > int(outputCoordinates[2:]):
+            for i in range((int(inputCoordinates[2:]) - int(outputCoordinates[2:])) - 1):
+                if columns[int(inputCoordinates[:1])][inputCoordinates[2:] - (i + 1)] != "  ":
+                    return False
+            return True
+        else:
+            for i in range((int(outputCoordinates[2:]) - int(inputCoordinates[2:])) - 1):
+                if columns[int(inputCoordinates[:1])][inputCoordinates[2:] + (i + 1)] != "  ":
+                    return False
+            return True
+    elif inputCoordinates[2:] == outputCoordinates[2:]:
+        if int(inputCoordinates[:1]) > int(outputCoordinates[:1]):
+            for i in range((int(inputCoordinates[:1]) - int(outputCoordinates[:1])) -1):
+                if columns[int(inputCoordinates[:1]) - (i + 1)][int(inputCoordinates[2:])] != "  ":
+                    return False
+            return True
+        else:
+            for i in range((int(outputCoordinates[:1]) - int(inputCoordinates[:1])) - 1):
+                if columns[int(inputCoordinates[:1]) + (i + 1)][int(inputCoordinates[2:])] != "  ":
+                    return False
+            return True
+    else:
+        if int(inputCoordinates[:1]) > int(outputCoordinates[:1]) and int(inputCoordinates[2:]) > int(outputCoordinates[2:]):
+            for i in range((int(outputCoordinates[:1]) - inputCoordinates[:1]) - 1):
+                if columns[int(inputCoordinates[:1]) - (i + 1)][int(inputCoordinates[2:]) - (i + 1)] != "  ":
+                    return False
+            return True
+        elif int(inputCoordinates[:1]) < int(outputCoordinates[:1]) and int(inputCoordinates[2:]) > int(outputCoordinates[2:]):
+            for i in range((int(inputCoordinates[:1]) - int(outputCoordinates[:1])) - 1):
+                if columns[int(inputCoordinates[:1]) - (i + 1)][int(inputCoordinates[2:]) + (i + 1)] != "  ":
+                    return False
+            return True
+        elif int(inputCoordinates[:1]) < int(outputCoordinates[:1]) and int(inputCoordinates[2:]) < int(outputCoordinates[2:]):
+            for i in range((int(outputCoordinates[:1]) - int(inputCoordinates[:1])) - 1):
+                if columns[int(inputCoordinates[:1]) + (i + 1)][int(inputCoordinates[2:]) + (i + 1)] != "  ":
+                    return False
+            return True
+        else:
+            for i in range((int(inputCoordinates[:1]) - int(outputCoordinates[:1])) - 1):
+                if columns[int(outputCoordinates[:1]) + (i + 1)][int(outputCoordinates[2:]) - (i + 1)] != "  ":
+                    return False
+            return True
+
 initialiseboard()
 drawboard()
-inputCoordinates = input("Please enter the coordinates of the piece you are moving, row first, eg. 3,4 \n")
-outputCoordinates = input("Please enter the coordinates of where you wish to move to, row first, eg. 5,4 \n")
 
-validmove()
-movepiece()
-drawboard()
+while gameOver == False:
+    if whosTurn == 'W':
+        print("\n WHITE'S TURN \n")
+    else:
+        print("\n BLACK'S TURN \n")
+
+    print("Enter 'q' to quit : ")
+    inputCoordinates = input("Please enter the coordinates of the piece you are moving, row first, eg. 3,4 \n")
+    outputCoordinates = input("Please enter the coordinates of where you wish to move to, row first, eg. 5,4 \n")
+
+    if inputCoordinates == 'q':
+        gameOver = True
+    validmove()
+    movepiece()
+    drawboard()
+    if whosTurn == 'W':
+        whosTurn = 'B'
+    else:
+        whosTurn = 'W'
