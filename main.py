@@ -185,7 +185,7 @@ def pawnValidMove():
     if whosTurn == 'W':
         if int(inputCoordinates[:1]) == 1:
             if int(outputCoordinates[2:]) == int(inputCoordinates[2:]):
-                if int(outputCoordinates[:1]) - int(inputCoordinates[:1]) == 1 or int(outputCoordinates[:1]) - int(inputCoordinates[:1]) == 2:
+                if (int(outputCoordinates[:1]) - int(inputCoordinates[:1]) == 1 or int(outputCoordinates[:1]) - int(inputCoordinates[:1]) == 2) and columns[int(outputCoordinates[:1])][int(outputCoordinates[2:])][:1] != 'B':
                     return True
                 else:
                     return False
@@ -199,7 +199,7 @@ def pawnValidMove():
                     return False
         else:
             if int(outputCoordinates[2:]) == int(inputCoordinates[2:]):
-                if int(outputCoordinates[:1]) - int(inputCoordinates[:1]) == 1:
+                if int(outputCoordinates[:1]) - int(inputCoordinates[:1]) == 1 and columns[int(outputCoordinates[:1])][int(outputCoordinates[2:])][:1] != "B":
                     return True
                 else:
                     return False
@@ -214,7 +214,7 @@ def pawnValidMove():
     else:
         if int(inputCoordinates[:1]) == 6:
             if int(outputCoordinates[2:]) == int(inputCoordinates[2:]):
-                if int(outputCoordinates[:1]) - int(inputCoordinates[:1]) == -1 or int(outputCoordinates[:1]) - int(inputCoordinates[:1]) == -2:
+                if (int(outputCoordinates[:1]) - int(inputCoordinates[:1]) == -1 or int(outputCoordinates[:1]) - int(inputCoordinates[:1]) == -2) and columns[int(outputCoordinates[:1])][int(outputCoordinates[2:])][:1] != 'W':
                     return True
                 else:
                     return False
@@ -228,7 +228,7 @@ def pawnValidMove():
                     return False
         else:
             if int(outputCoordinates[2:]) == int(inputCoordinates[2:]):
-                if int(outputCoordinates[:1]) - int(inputCoordinates[:1]) == -1:
+                if int(outputCoordinates[:1]) - int(inputCoordinates[:1]) == -1 and columns[int(outputCoordinates[:1])][int(outputCoordinates[2:])][:1] != 'W':
                     return True
                 else:
                     return False
