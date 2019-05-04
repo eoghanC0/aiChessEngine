@@ -1,12 +1,14 @@
 
-columns = [] #Array used to store board
+Board = [] #Array used to store board
 whosTurn = 'W' #Holds 'W' if whites turn and 'B' if Blacks turn
-invalidMove = False #Holds true if whole move is invalid else True
+invalidMove = True #Holds true if whole move is invalid else True
 validCoords = False #Holds true if inputCoords, outputCoords and specific piece move is valid
+validSquareToMoveTo = False
+validSquareToMoveFromValidate = False
 gameOver = False #Holds True if Checkmate or player quits, used to terminate game loop
 
 
-""" Create an 8*8 array for the board and then fill the correct squares with the pieces according to the row and column
+""" Create an 8*8 array for the board and then fill the correct squares with the pieces according to the row and Board
    W = white
    B = Black
    R = Rook 
@@ -28,9 +30,9 @@ def initialiseboard():
                 elif j == 2:
                     rows.append("WB")
                 elif j == 3:
-                    rows.append("WK")
-                elif j == 4:
                     rows.append("WQ")
+                elif j == 4:
+                    rows.append("WK")
                 elif j == 5:
                     rows.append("WB")
                 elif j == 6:
@@ -41,45 +43,46 @@ def initialiseboard():
                 rows.append("WP")
             elif i == 7:
                 if j == 0:
-                    rows.append("BR")
+                    rows.append("br")
                 elif j == 1:
-                    rows.append("BN")
+                    rows.append("bn")
                 elif j == 2:
-                    rows.append("BB")
+                    rows.append("bb")
                 elif j == 3:
-                    rows.append("BK")
+                    rows.append("bq")
                 elif j == 4:
-                    rows.append("BQ")
+                    rows.append("bk")
                 elif j == 5:
-                    rows.append("BB")
+                    rows.append("bb")
                 elif j == 6:
-                    rows.append("BN")
+                    rows.append("bn")
                 elif j == 7:
-                    rows.append("BR")
+                    rows.append("br")
             elif i == 6:
-                rows.append("BP")
+                rows.append("bp")
             else:
                 rows.append("  ")
-        columns.append(rows)
+        Board.append(rows)
 
 
-"""Loop through each element of the 2D array, board, and print to screen with row and column numbers"""
+"""Loop through each element of the 2D array, board, and print to screen with row and Column numbers"""
 
 
 def drawboard():
     for i in range(8):
         if i != 7:
-            print("      " + str(i), end="")
+            print("      " + chr(i + 97), end="")
         else:
-            print("      " + str(i) + "\n")
+            print("      " + chr(i + 97) + "\n")
 
-    for i in range(8):
+    for i in range(8, 0, -1):
         print(str(i) + "    ", end="")
         for j in range(8):
             if j != 7:
-                print(columns[i][j] + "     ", end="")
+                print(Board[i - 1][j] + "     ", end="")
             else:
-                print(columns[i][j] + "    " + "\n")
+                print(Board[i - 1][j] + "    " + "\n")
+
 
 
 """Move the piece the user selected to where they want to go in the board array"""
@@ -88,50 +91,65 @@ def drawboard():
 def movepiece(moveFrom, moveTo):
     for i in range(8):
         for j in range(8):
-            if i == int(moveFrom[:1]) and j == int(moveFrom[2:]):
-                columns[int(moveTo[:1])][int(moveTo[2:])] = columns[i][j]
-                columns[i][j] = "  "
+            if i + 97 == ascii(moveFrom[:1]) and j == int(moveFrom[2:]):
+                Board[int(moveTo[:1])][int(moveTo[2:])] = Board[i][j]
+                Board[i][j] = "  "
 
 
 """If inputCoords are between 0 and 7 call validsquaretomoveto(moveFrom, moveTO) else return False"""
 
 
 def isThisAValidmove(moveFrom, moveTo):
-    if int(moveFrom[:1]) >= 0 and int(moveFrom[:1]) < 8 and int(moveFrom[2:]) >= 0 and int(moveFrom[2:]) < 8:
-        if (columns[int(moveFrom[:1])][int(moveFrom[2:])])[:1] == whosTurn:
-            return validsquaretomoveto(moveFrom, moveTo)
+    print("HERE")
+    try:
+        if ascii(moveFrom[:1]) >= 97 and ascii(moveFrom[:1]) < 105 and int(moveFrom[1:]) >= 0 and int(moveFrom[1:]) < 8:
+            if (Board[int(ascii(moveFrom[:1]) - 97)][int(moveFrom[2:])])[:1] == whosTurn:
+                return validsquaretomoveto(moveFrom, moveTo)
+            else:
+                print("Please select one of your own pieces")
+                return False
         else:
-            print("Please select one of your own pieces")
+            print("Please select a piece on the board")
             return False
-    else:
-        print("Please select a piece on the board")
-        return False
+    except:
+        print("This is an invalid square to move from, please select another")
 
 
 """If outputCoords are between 0 and 7 and not your own piece call specific piece move, else return False"""
 
 
 def validsquaretomoveto(moveFrom, moveTo):
-    if int(moveTo[:1]) >= 0 and int(moveTo[:1])< 8 and  int(moveTo[2:]) >= 0 and int(moveTo[2:])< 8:
-        if (columns[int(moveTo[:1])][int(moveTo[2:])])[:1] == whosTurn:
-            print("Cannot move to a square with your own piece already on it")
-            return False
+    print("HERE1")
+    try:
+        if ascii(moveTo[:1]) >= 97 and ascii(moveTo[:1]) < 105 and int(moveTo[1:]) >= 0 and int(moveTo[1:]) < 8:
+            if (Board[int(ascii(moveTo[:1]) - 97)][int(moveTo[2:])])[:1] == whosTurn:
+                print("Cannot move to a square with your own piece already on it")
+                return False
+            else:
+                print("HERE2")
+                if (Board[int(moveFrom[:1])][int(moveFrom[2:])])[1:] == "R":
+                    return True
+                    # return rookValidMove(moveFrom, moveTo)
+                elif(Board[int(moveFrom[:1])][int(moveFrom[2:])])[1:] == "N":
+                    return True
+                    # return knightValidMove(moveFrom, moveTo)
+                elif (Board[int(moveFrom[:1])][int(moveFrom[2:])])[1:] == "B":
+                    return True
+                    # return bishopValidMove(moveFrom, moveTo)
+                elif (Board[int(moveFrom[:1])][int(moveFrom[2:])])[1:] == "Q":
+                    return True
+                    # return queenValidMove(moveFrom, moveTo)
+                elif (Board[int(moveFrom[:1])][int(moveFrom[2:])])[1:] == "K":
+                    return True
+                    # return kingValidMove(moveFrom, moveTo)
+                elif (Board[int(moveFrom[:1])][int(moveFrom[2:])])[1:] == "P":
+                    return True
+                    # return pawnValidMove(moveFrom, moveTo)
         else:
-            if (columns[int(moveFrom[:1])][int(moveFrom[2:])])[1:] == "R":
-                return rookValidMove(moveFrom, moveTo)
-            elif(columns[int(moveFrom[:1])][int(moveFrom[2:])])[1:] == "N":
-                return knightValidMove(moveFrom, moveTo)
-            elif (columns[int(moveFrom[:1])][int(moveFrom[2:])])[1:] == "B":
-                return bishopValidMove(moveFrom, moveTo)
-            elif (columns[int(moveFrom[:1])][int(moveFrom[2:])])[1:] == "Q":
-                return queenValidMove(moveFrom, moveTo)
-            elif (columns[int(moveFrom[:1])][int(moveFrom[2:])])[1:] == "K":
-                return kingValidMove(moveFrom, moveTo)
-            elif (columns[int(moveFrom[:1])][int(moveFrom[2:])])[1:] == "P":
-                return pawnValidMove(moveFrom, moveTo)
-    else:
-        print("Cannot move to a square off the board")
-        return False
+            print("Cannot move to a square off the board")
+            return False
+    except:
+        print("This is an invalid square to move to, please select another")
 
 
 """If move is valid for a rook call nothingInTheWay(moveFrom, moveTo), else return False"""
@@ -197,14 +215,14 @@ def pawnValidMove(moveFrom, moveTo):
         if int(moveFrom[:1]) == 1:
             if int(moveTo[2:]) == int(moveFrom[2:]):
                 """"Check for white pawn making initial move"""
-                if (int(moveTo[:1]) - int(moveFrom[:1]) == 1 or int(moveTo[:1]) - int(moveFrom[:1]) == 2) and columns[int(moveTo[:1])][int(moveTo[2:])][:1] != 'B':
+                if (int(moveTo[:1]) - int(moveFrom[:1]) == 1 or int(moveTo[:1]) - int(moveFrom[:1]) == 2) and Board[int(moveTo[:1])][int(moveTo[2:])][:1] != 'B':
                     return True
                 else:
                     return False
             else:
                 """Allow White pawn to take black pawn in initial move"""
                 if int(moveTo[:1]) == 2 and abs(int(moveTo[2:]) - int(moveFrom[2:])) == 1:
-                    if columns[int(moveTo[:1])][int(moveTo[2:])][:1] == "B":
+                    if Board[int(moveTo[:1])][int(moveTo[2:])][:1] == "B":
                         return True
                     else:
                         return False
@@ -213,14 +231,14 @@ def pawnValidMove(moveFrom, moveTo):
         else:
             """Check for White pawn moving forward a square after initial move"""
             if int(moveTo[2:]) == int(moveFrom[2:]):
-                if int(moveTo[:1]) - int(moveFrom[:1]) == 1 and columns[int(moveTo[:1])][int(moveTo[2:])][:1] != "B":
+                if int(moveTo[:1]) - int(moveFrom[:1]) == 1 and Board[int(moveTo[:1])][int(moveTo[2:])][:1] != "B":
                     return True
                 else:
                     return False
             else:
                 """Check for White pawn taking piece after initial move"""
                 if int(moveTo[:1]) == int(moveFrom[:1]) + 1 and abs(int(moveTo[2:]) - int(moveFrom[2:])) == 1:
-                    if columns[int(moveTo[:1])][int(moveTo[2:])][:1] == "B":
+                    if Board[int(moveTo[:1])][int(moveTo[2:])][:1] == "B":
                         return True
                     else:
                         return False
@@ -230,13 +248,13 @@ def pawnValidMove(moveFrom, moveTo):
         """Same as above but for black pawns"""
         if int(moveFrom[:1]) == 6:
             if int(moveTo[2:]) == int(moveFrom[2:]):
-                if (int(moveTo[:1]) - int(moveFrom[:1]) == -1 or int(moveTo[:1]) - int(moveFrom[:1]) == -2) and columns[int(moveTo[:1])][int(moveTo[2:])][:1] != 'W':
+                if (int(moveTo[:1]) - int(moveFrom[:1]) == -1 or int(moveTo[:1]) - int(moveFrom[:1]) == -2) and Board[int(moveTo[:1])][int(moveTo[2:])][:1] != 'W':
                     return True
                 else:
                     return False
             else:
                 if int(moveTo[:1]) == 5 and abs(int(moveTo[2:]) - int(moveFrom[2:])) == 1:
-                    if columns[int(moveTo[:1])][int(moveTo[2:])][:1] == "W":
+                    if Board[int(moveTo[:1])][int(moveTo[2:])][:1] == "W":
                         return True
                     else:
                         return False
@@ -244,13 +262,13 @@ def pawnValidMove(moveFrom, moveTo):
                     return False
         else:
             if int(moveTo[2:]) == int(moveFrom[2:]):
-                if int(moveTo[:1]) - int(moveFrom[:1]) == -1 and columns[int(moveTo[:1])][int(moveTo[2:])][:1] != 'W':
+                if int(moveTo[:1]) - int(moveFrom[:1]) == -1 and Board[int(moveTo[:1])][int(moveTo[2:])][:1] != 'W':
                     return True
                 else:
                     return False
             else:
                 if int(moveTo[:1]) == int(moveFrom[:1]) - 1 and abs(int(moveTo[2:]) - int(moveFrom[2:])) == 1:
-                    if columns[int(moveTo[:1])][int(moveTo[2:])][:1] == "W":
+                    if Board[int(moveTo[:1])][int(moveTo[2:])][:1] == "W":
                         return True
                     else:
                         return False
@@ -258,60 +276,61 @@ def pawnValidMove(moveFrom, moveTo):
                     return False
 
 
-"""This routine checks that their is no piece inbetween the start square and destination square for a rook, bishop or queen"""
+"""This routine checks that their is no piece inbetween
+ the start square and destination square for a rook, bishop or queen"""
 
 
 def nothingInTheWay(moveFrom, moveTo):
     if moveFrom[:1] == moveTo[:1]:
         if int(moveFrom[2:]) > int(moveTo[2:]):
             for i in range((int(moveFrom[2:]) - int(moveTo[2:])) - 1):
-                if columns[int(moveFrom[:1])][int(moveFrom[2:]) - (i + 1)] != "  ":
+                if Board[int(moveFrom[:1])][int(moveFrom[2:]) - (i + 1)] != "  ":
                     return False
             return True
         else:
             for i in range((int(moveTo[2:]) - int(moveFrom[2:])) - 1):
-                if columns[int(moveFrom[:1])][int(moveFrom[2:]) + (i + 1)] != "  ":
+                if Board[int(moveFrom[:1])][int(moveFrom[2:]) + (i + 1)] != "  ":
                     return False
             return True
     elif moveFrom[2:] == moveTo[2:]:
         if int(moveFrom[:1]) > int(moveTo[:1]):
             for i in range((int(moveFrom[:1]) - int(moveTo[:1])) - 1):
-                if columns[int(moveFrom[:1]) - (i + 1)][int(moveFrom[2:])] != "  ":
+                if Board[int(moveFrom[:1]) - (i + 1)][int(moveFrom[2:])] != "  ":
                     return False
             return True
         else:
             for i in range((int(moveTo[:1]) - int(moveFrom[:1])) - 1):
-                if columns[int(moveFrom[:1]) + (i + 1)][int(moveFrom[2:])] != "  ":
+                if Board[int(moveFrom[:1]) + (i + 1)][int(moveFrom[2:])] != "  ":
                     return False
             return True
     else:
         if int(moveFrom[:1]) > int(moveTo[:1]) and int(moveFrom[2:]) > int(moveTo[2:]):
             for i in range((int(moveTo[:1]) - int(moveFrom[:1])) - 1):
-                if columns[int(moveFrom[:1]) - (i + 1)][int(moveFrom[2:]) - (i + 1)] != "  ":
+                if Board[int(moveFrom[:1]) - (i + 1)][int(moveFrom[2:]) - (i + 1)] != "  ":
                     return False
             return True
         elif int(moveFrom[:1]) < int(moveTo[:1]) and int(moveFrom[2:]) > int(moveTo[2:]):
             for i in range((int(moveFrom[:1]) - int(moveTo[:1])) - 1):
-                if columns[int(moveFrom[:1]) - (i + 1)][int(moveFrom[2:]) + (i + 1)] != "  ":
+                if Board[int(moveFrom[:1]) - (i + 1)][int(moveFrom[2:]) + (i + 1)] != "  ":
                     return False
             return True
         elif int(moveFrom[:1]) < int(moveTo[:1]) and int(moveFrom[2:]) < int(moveTo[2:]):
             for i in range((int(moveTo[:1]) - int(moveFrom[:1])) - 1):
-                if columns[int(moveFrom[:1]) + (i + 1)][int(moveFrom[2:]) + (i + 1)] != "  ":
+                if Board[int(moveFrom[:1]) + (i + 1)][int(moveFrom[2:]) + (i + 1)] != "  ":
                     return False
             return True
         else:
             for i in range((int(moveFrom[:1]) - int(moveTo[:1])) - 1):
-                if columns[int(moveTo[:1]) + (i + 1)][int(moveTo[2:]) - (i + 1)] != "  ":
+                if Board[int(moveTo[:1]) + (i + 1)][int(moveTo[2:]) - (i + 1)] != "  ":
                     return False
             return True
 
 
 """This routine simply undoes the last move by switching the pieces in the board array"""
 
-def undoLastMove():
-    columns[int(moveFrom[:1])][int(moveFrom[2:])] = columns[int(moveTo[:1])][int(moveTo[2:])]
-    columns[int(moveTo[:1])][int(moveTo[2:])] = "  "
+def undoLastMove(tempPiece):
+    Board[int(moveFrom[:1])][int(moveFrom[2:])] = Board[int(moveTo[:1])][int(moveTo[2:])]
+    Board[int(moveTo[:1])][int(moveTo[2:])] = tempPiece
 
 
 """This routine checks that if by making your move will you put yourself in check, if so return True"""
@@ -331,7 +350,7 @@ def amIInCheck():
 
     for i in range(8):
         for j in range(8):
-            if columns[i][j][:1] == whosTurn and columns[i][j][1:] == "K":
+            if Board[i][j][:1] == whosTurn and Board[i][j][1:] == "K":
                 kingX = j
                 kingY = i
 
@@ -346,7 +365,7 @@ def amIInCheck():
 
     for i in range(8):
         for j in range(8):
-            if columns[i][j][:1] == whosTurn:
+            if Board[i][j][:1] == whosTurn:
                 invalidMove = isThisAValidmove(str(i) + "," + str(j), str(kingY) + "," + str(kingX))
                 if invalidMove == True:
                     inCheckFlag = True
@@ -365,10 +384,10 @@ def amIInCheck():
 
     if inCheckFlag == True:
         print("YOU ARE IN CHECK")
-        return False
+        return True
     else:
         print("\n YOU ARE NOT IN CHECK \n")
-        return True
+        return False
 
 
 def inCheck():
@@ -382,7 +401,7 @@ def inCheck():
 
     for i in range(8):
         for j in range(8):
-            if columns[i][j][:1] != whosTurn and columns[i][j][:1] != " " and columns[i][j][1:] == "K":
+            if Board[i][j][:1] != whosTurn and Board[i][j][:1] != " " and Board[i][j][1:] == "K":
                 kingX = j
                 kingY = i
 
@@ -390,7 +409,7 @@ def inCheck():
 
     for i in range(8):
         for j in range(8):
-            if columns[i][j][:1] == whosTurn:
+            if Board[i][j][:1] == whosTurn:
                 invalidMove = isThisAValidmove(str(i) + "," + str(j), str(kingY) + "," + str(kingX))
                 if invalidMove:
                     attackingPieces = attackingPieces + 1
@@ -408,30 +427,30 @@ def createListOfSpacesInBetween2Pieces(moveFrom, moveTo):
     if moveFrom[:1] == moveTo[:1]:
         if int(moveFrom[2:]) > int(moveTo[2:]):
             for i in range((int(moveFrom[2:]) - int(moveTo[2:])) - 1):
-                spacesInBetween.append(columns[int(moveFrom[:1])][moveFrom[2:] - (i + 1)])
+                spacesInBetween.append(str(moveFrom[:1]) + "," + str(int(moveFrom[2:]) - (i + 1)))
         else:
             for i in range((int(moveTo[2:]) - int(moveFrom[2:])) - 1):
-                spacesInBetween.append(columns[int(moveFrom[:1])][moveFrom[2:] + (i + 1)])
+                spacesInBetween.append(str(int(moveFrom[:1]) + (i + 1)) + "," + moveFrom[2:])
     elif moveFrom[2:] == moveTo[2:]:
         if int(moveFrom[:1]) > int(moveTo[:1]):
             for i in range((int(moveFrom[:1]) - int(moveTo[:1])) - 1):
-                spacesInBetween.append(columns[int(moveFrom[:1]) - (i + 1)][int(moveFrom[2:])])
+                spacesInBetween.append(str(int(moveFrom[:1]) - (i + 1)) + "," + moveFrom[2:])
         else:
             for i in range((int(moveTo[:1]) - int(moveFrom[:1])) - 1):
-                spacesInBetween.append(columns[int(moveFrom[:1]) + (i + 1)][int(moveFrom[2:])])
+                spacesInBetween.append(str(int(moveFrom[:1]) + (i + 1)) + "," + moveFrom[2:])
     else:
         if int(moveFrom[:1]) > int(moveTo[:1]) and int(moveFrom[2:]) > int(moveTo[2:]):
             for i in range((int(moveTo[:1]) - int(moveFrom[:1])) - 1):
-                spacesInBetween.append(columns[int(moveFrom[:1]) - (i + 1)][int(moveFrom[2:]) - (i + 1)])
+                spacesInBetween.append(str(int(moveFrom[:1]) - (i + 1)) + "," + str(int(moveFrom[2:]) - (i + 1)))
         elif int(moveFrom[:1]) < int(moveTo[:1]) and int(moveFrom[2:]) > int(moveTo[2:]):
             for i in range((int(moveFrom[:1]) - int(moveTo[:1])) - 1):
-                spacesInBetween.append(columns[int(moveFrom[:1]) - (i + 1)][int(moveFrom[2:]) + (i + 1)])
+                spacesInBetween.append(str(int(moveFrom[:1]) - (i + 1)) + "," + str(int(moveFrom[2:]) + (i + 1)))
         elif int(moveFrom[:1]) < int(moveTo[:1]) and int(moveFrom[2:]) < int(moveTo[2:]):
             for i in range((int(moveTo[:1]) - int(moveFrom[:1])) - 1):
-                spacesInBetween.append(columns[int(moveFrom[:1]) + (i + 1)][int(moveFrom[2:]) + (i + 1)])
+                spacesInBetween.append(str(int(moveFrom[:1]) + (i + 1)) + "," + str(int(moveFrom[2:]) + (i + 1)))
         else:
             for i in range((int(moveFrom[:1]) - int(moveTo[:1])) - 1):
-                spacesInBetween.append(columns[int(moveTo[:1]) + (i + 1)][int(moveTo[2:]) - (i + 1)])
+                spacesInBetween.append(str(int(moveTo[:1]) + (i + 1)) + "," + str(int(moveTo[2:]) - (i + 1)))
     return spacesInBetween
 
 
@@ -442,6 +461,7 @@ def inCheckMate(kingY, kingX, attackingPieces):
         # Need attacking piece Square coordinates
 
         global whosTurn
+        global validMove
 
         if whosTurn =='W':
             whosTurn = 'B'
@@ -460,19 +480,33 @@ def inCheckMate(kingY, kingX, attackingPieces):
             if isThisAValidmove(str(kingY) + "," + str(kingX), str(kingY - 1) + "," + str(kingX + (i - 1))):
                 return False
 
-        if attackingPieces == 1:
-            for i in range(8):
+        # if attackingPieces > 1 then if king can't move to valid square checkmate
+        if attackingPieces > 1:
+            print("\n\nIN CHECKMATE GAME OVER\n\n")
+            return True
+
+        for i in range(8):
+            if validMove:
+                return False
+            for j in range(8):
+                validMove = isThisAValidmove(str(i) + "," + str(j), moveTo)
                 if validMove:
                     return False
-                for j in range(8):
-                    validMove = isThisAValidmove(str(i) + "," + str(j), moveTo)
-                    if validMove:
-                        return False
 
         #if NOT validMove:
-        createListOfSpacesInBetween2Pieces(moveFrom, str(kingY) + "," + str(kingX))
+        spacesInBetween = createListOfSpacesInBetween2Pieces(moveFrom, str(kingY) + "," + str(kingX))
         # can I block
         # call valid move for every piece to every square in between
+
+        print("CHECKING BLOCKS")
+        for i in range(8):
+            for j in range(8):
+              if Board[i][j][:1] == whosTurn:
+                for k in spacesInBetween:
+                  validMove = isThisAValidmove(str(i) + "," + str(j), k)
+                  if validMove:
+                    print(str(i) + "," + str(j))
+                    return False
 
         if whosTurn == 'W':
             whosTurn = 'B'
@@ -496,28 +530,33 @@ while gameOver == False:
     else:
         print("\n BLACK'S TURN \n")
 
-    while invalidMove == False:
+    #while invalidMove == True:
         while validCoords == False:
-            moveFrom = input("Please enter the coordinates of the piece you are moving, row first, eg. 3,4 \n")
-            moveTo = input("Please enter the coordinates of where you wish to move to, row first, eg. 5,4 \n")
+            moveFrom = input("Please enter the coordinates of the piece you are moving, column first, eg. e2 \n")
+            moveTo = input("Please enter the coordinates of where you wish to move to, column first, eg. e4 \n")
             validCoords = isThisAValidmove(moveFrom, moveTo)
-
-        movepiece(moveFrom, moveTo)
-        invalidMove = amIInCheck()
-        if invalidMove == False:
-            validCoords = False
-            undoLastMove()
-
-    invalidMove = False
-    validCoords = False
-    #Clear spaces in between list
-
-    inCheck()
-    #Check if opposition is in check
-    #If so check Checkmate
 
     drawboard()
     if whosTurn == 'W':
         whosTurn = 'B'
     else:
         whosTurn = 'W'
+"""
+        tempPiece = Board[moveTo[:1]][moveTo[2:]]
+
+        movepiece(moveFrom, moveTo)
+        invalidMove = amIInCheck()
+        print(invalidMove)
+        if invalidMove == True:
+            print("HERE")
+            validCoords = False
+            undoLastMove(tempPiece)
+
+    invalidMove = True
+    validCoords = False
+    #Clear spaces in between list
+
+    inCheck()
+    #Check if opposition is in check
+    #If so check Checkmate
+"""
