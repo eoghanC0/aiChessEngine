@@ -179,7 +179,7 @@ def testinitialiseboardcheck():
 def drawboard():
     for i in range(8):
         if i != 7:
-            print("       " + chr(i + 97), end="")
+            print("       " + chr(i + 97),end="")
         else:
             print("      " + chr(i + 97) + "\n")
     for i in range(8, 0, -1):
@@ -911,64 +911,76 @@ def createlistofvalidmoves(colour):
                                     str(chr(i + 97)) + str(j + 1) + "," + str(chr(k + 97)) + str(l + 1))
 
     checkincheck = False
-    # return listofvalidmoves
+    return listofvalidmoves
 
-    if len(listofvalidmoves) == 0:
-        print("NO VALID MOVES")
-    else:
-        for x in listofvalidmoves:
-            counter = counter + 1
-            movepiece(x[:2], x[3:])
-            currentscore = evaluateboard()
-            if currentscore < defaultboardscore:
-                defaultboardscore = currentscore
-                bestmove = counter
-            undoLastMove(x[:2], x[3:])
-        if bestmove != -1:
-            movepiece(listofvalidmoves[bestmove][:2], listofvalidmoves[bestmove][3:])
-        else:
-            randomMove = random.randint(0, len(listofvalidmoves) - 1)
-            print(randomMove)
-            movepiece(listofvalidmoves[randomMove][:2], listofvalidmoves[randomMove][3:])
-    checkincheck = False
+    # if len(listofvalidmoves) == 0:
+    #     print("NO VALID MOVES")
+    # else:
+    #     for x in listofvalidmoves:
+    #         counter = counter + 1
+    #         movepiece(x[:2], x[3:])
+    #         currentscore = evaluateboard()
+    #         if currentscore < defaultboardscore:
+    #             defaultboardscore = currentscore
+    #             bestmove = counter
+    #         undoLastMove(x[:2], x[3:])
+    #     if bestmove != -1:
+    #         movepiece(listofvalidmoves[bestmove][:2], listofvalidmoves[bestmove][3:])
+    #     else:
+    #         randomMove = random.randint(0, len(listofvalidmoves) - 1)
+    #         print(randomMove)
+    #         movepiece(listofvalidmoves[randomMove][:2], listofvalidmoves[randomMove][3:])
+    # checkincheck = False
 
 
-"""def minimax(depth, colour, isMaximizingPlayer = True):
+def minimax(depth, colour, isMaximizingPlayer):
 
   #base case to terminate recursion
   if depth == 0:
     boardvalue = evaluateboard()
-    return(boardvalue, None) # might need to return NULL as well
+    return(boardvalue) # might need to return NULL as well
 
   bestMove = None
   possiblemoves = createlistofvalidmoves(colour)
   if isMaximizingPlayer:
-    bestmovevalue = float("-inf")
+    best = float("-inf")
+    for x in possiblemoves:
+        movepiece(x[:2], x[3:])
+        best = max(best,minimax(depth-1,'W',not isMaximizingPlayer))
+        undoLastMove(x[:2], x[3:])
+    return best
   else:
-    bestmovevalue = float("inf")
+    best = float("inf")
+    for x in possiblemoves:
+        movepiece(x[:2], x[3:])
+        best = min(best,minimax(depth-1,'b',not isMaximizingPlayer))
+        undoLastMove(x[:2], x[3:])
+    return best
 
-  for x in possiblemoves:
-    movepiece(x[:2], x[3:])
-    boardvalue = minimax(depth-1, colour, isMaximizingPlayer)
-    if isMaximizingPlayer:
-      print("MAX : " + str(depth) + ", " + str(x) + ", " + str(boardvalue) + ", " + str(bestMove) + ", " + str(bestmovevalue))
-    else:
-      print("MIN : " + str(depth) + ", " + str(x) + ", " + str(boardvalue) + ", " + str(bestMove) + ", " + str(bestmovevalue))
 
-    if isMaximizingPlayer:
-      if boardvalue > bestmovevalue:
-        bestmovevalue = boardvalue
-        bestMove = x
-    else:
-       if boardvalue < bestmovevalue:
-        bestmovevalue = boardvalue
-        bestMove = x
-    undoLastMove(x[:2], x[3:])
+#using minimax function to look 3 moves ahead and find optimal move
+def findBestMove():
+    bestMove = ""
+    bestVal = float("inf")
 
-    print("DEPTH : " + str(depth) + ", BEST MOVE : " +  str(bestMove) + ", BEST MOVE VALUE : " + str(bestmovevalue))
+    possiblemoves = createlistofvalidmoves(whosTurn)
+    for x in possiblemoves:
+        movepiece(x[:2], x[3:])
+        moveVal = minimax(0,'W',False)
+        undoLastMove(x[:2], x[3:])
 
-    return(bestMove)
-"""
+        if moveVal < bestVal:
+            bestMove = x
+            bestVal = moveVal
+
+    print(bestMove)
+    print(bestVal)
+    return bestMove
+
+
+
+
+
 
 
 def evaluateboard():
@@ -1045,8 +1057,10 @@ while not gameOver:
     validmove = False
     inCheck()
     drawboard()
-    # minimax(3, whosTurn, False)
-    createlistofvalidmoves(whosTurn)
+    #find best move for opposition (ie.black, minimizing)
+    oppositionMove = findBestMove()
+    movepiece(oppositionMove[:2], oppositionMove[3:])
+    #createlistofvalidmoves(whosTurn)
 
     if not gameOver:
         scores()
