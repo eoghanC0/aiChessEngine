@@ -10,6 +10,9 @@ checkincheck = False
 castlingallowed = 0b00000000
 errormessage = ""
 movetopiece = "  "
+minimaxcalls = 0
+minimaxpiececounter = 0
+movetopieces = []
 
 """ Create an 8*8 array for the board and then fill the correct squares with the pieces according to the row and Board 
    W = white    
@@ -179,7 +182,7 @@ def testinitialiseboardcheck():
 def drawboard():
     for i in range(8):
         if i != 7:
-            print("       " + chr(i + 97),end="")
+            print("       " + chr(i + 97), end="")
         else:
             print("      " + chr(i + 97) + "\n")
     for i in range(8, 0, -1):
@@ -197,9 +200,9 @@ def drawboard():
 
 
 def movepiece(movefrom, moveto):
-    global movetopiece
+    global movetopieces
 
-    movetopiece = Board[int(ord(moveto[:1])) - 97][int(moveto[1:]) - 1]
+    movetopieces.append(Board[int(ord(moveto[:1])) - 97][int(moveto[1:]) - 1])
     for i in range(8):
         for j in range(8):
             if i + 97 == ord(movefrom[:1]) and j == int(movefrom[1:]) - 1:
@@ -492,7 +495,8 @@ def pawnValidMove(movefrom, moveto):
 
 
 def pawnpromotion():
-    newpiece = input("please select what piece you would like : \n  1: Rook \n 2: Knight \n 3: Bishop \n 4: Queen\n")
+    newpiece = input(
+        "please select what piece you would like : \n  1: Rook \n 2: Knight \n 3: Bishop \n 4: Queen\n")
     if newpiece == "1":
         if whosTurn == "W":
             Board[int(ord(movefrom[:1])) - 97][int(movefrom[1:]) - 1] = "WR"
@@ -659,7 +663,8 @@ def amINotInCheck():
     for i in range(8):
         for j in range(8):
             if Board[i][j][:1] == whosTurn:
-                invalidMove = isThisAValidmove(str(chr(i + 97)) + str(j + 1), str(chr(kingY + 97)) + str(kingX + 1))
+                invalidMove = isThisAValidmove(
+                    str(chr(i + 97)) + str(j + 1), str(chr(kingY + 97)) + str(kingX + 1))
                 if invalidMove:
                     inCheckFlag = True
                     break
@@ -689,11 +694,13 @@ def amINotInCheck():
 
 
 def undoLastMove(moveFromSquare, moveToSquare):
-    global movetopiece
+    global movetopieces
 
+    piecepopped = movetopieces.pop()
     Board[int(ord(moveFromSquare[:1])) - 97][int(moveFromSquare[1:]) - 1] = Board[int(ord(moveToSquare[:1])) - 97][
         int(moveToSquare[1:]) - 1]
-    Board[int(ord(moveToSquare[:1])) - 97][int(moveToSquare[1:]) - 1] = movetopiece
+    Board[int(ord(moveToSquare[:1])) -
+          97][int(moveToSquare[1:]) - 1] = piecepopped
 
 
 """This routine creates a list of spaces in between to given pieces, this is used in inCheckMate() to see what spaces to try and block a check, works the same way as nothingInTheWay()"""
@@ -705,30 +712,38 @@ def createListOfSpacesInBetween2Pieces(movefrom, moveto):
     if movefrom[1:] == moveto[1:]:
         if int(ord(movefrom[:1]) - 97) > int(ord(moveto[:1]) - 97):  # horizontal h -> a
             for i in range((int(ord(movefrom[:1]) - 97) - int(ord(moveto[:1]) - 97)) - 1):
-                spacesInBetween.append(str(chr(int(ord(movefrom[:1])) - (i + 1))) + str(int(movefrom[1:])))
+                spacesInBetween.append(
+                    str(chr(int(ord(movefrom[:1])) - (i + 1))) + str(int(movefrom[1:])))
         else:  # horizontal a -> h
             for i in range((int(ord(moveto[:1]) - 97) - int(ord(movefrom[:1]) - 97)) - 1):
-                spacesInBetween.append(str(chr(int(ord(movefrom[:1])) + (i + 1))) + str(int(movefrom[1:])))
+                spacesInBetween.append(
+                    str(chr(int(ord(movefrom[:1])) + (i + 1))) + str(int(movefrom[1:])))
     elif int(ord(movefrom[:1])) - 97 == int(ord(moveto[:1])) - 97:
         if int(movefrom[1:]) > int(moveto[1:]):  # vertical 8 -> 1
             for i in range((int(movefrom[1:]) - int(moveto[1:])) - 1):
-                spacesInBetween.append(str(chr(int(ord(movefrom[:1])))) + str(int(movefrom[1:]) - (i + 1)))
+                spacesInBetween.append(
+                    str(chr(int(ord(movefrom[:1])))) + str(int(movefrom[1:]) - (i + 1)))
         else:  # vertical 1 -> 8
             for i in range((int(moveto[1:]) - int(movefrom[1:])) - 1):
-                spacesInBetween.append(str(chr(int(ord(movefrom[:1])))) + str(int(movefrom[1:]) + (i + 1)))
+                spacesInBetween.append(
+                    str(chr(int(ord(movefrom[:1])))) + str(int(movefrom[1:]) + (i + 1)))
     else:  # check all 4 diagonal directions
         if int(movefrom[1:]) > int(moveto[1:]) and int(ord(movefrom[:1])) - 97 > int(ord(moveto[:1])) - 97:  # >>
             for i in range((int(movefrom[1:]) - int(moveto[1:])) - 1):
-                spacesInBetween.append(str(chr(int(ord(movefrom[:1])) - (i + 1))) + str(int(movefrom[1:]) - (i + 1)))
+                spacesInBetween.append(
+                    str(chr(int(ord(movefrom[:1])) - (i + 1))) + str(int(movefrom[1:]) - (i + 1)))
         elif int(movefrom[1:]) < int(moveto[1:]) and int(ord(movefrom[:1]) - 97) > int(ord(moveto[:1]) - 97):  # <>
             for i in range((int(moveto[1:]) - int(movefrom[1:])) - 1):
-                spacesInBetween.append(str(chr(int(ord(movefrom[:1])) - (i + 1))) + str(int(movefrom[1:]) + (i + 1)))
+                spacesInBetween.append(
+                    str(chr(int(ord(movefrom[:1])) - (i + 1))) + str(int(movefrom[1:]) + (i + 1)))
         elif int(movefrom[1:]) < int(moveto[1:]) and int(ord(movefrom[:1]) - 97) < int(ord(moveto[:1]) - 97):  # <<
             for i in range((int(moveto[1:]) - int(movefrom[1:])) - 1):
-                spacesInBetween.append(str(chr(int(ord(movefrom[:1])) + (i + 1))) + str(int(movefrom[1:]) + (i + 1)))
+                spacesInBetween.append(
+                    str(chr(int(ord(movefrom[:1])) + (i + 1))) + str(int(movefrom[1:]) + (i + 1)))
         else:  # ><
             for i in range((int(movefrom[1:]) - int(moveto[1:])) - 1):
-                spacesInBetween.append(str(chr(int(ord(movefrom[:1])) + (i + 1))) + str(int(movefrom[1:]) - (i + 1)))
+                spacesInBetween.append(
+                    str(chr(int(ord(movefrom[:1])) + (i + 1))) + str(int(movefrom[1:]) - (i + 1)))
     return spacesInBetween
 
 
@@ -754,7 +769,8 @@ def inCheck():
     for i in range(8):
         for j in range(8):
             if Board[i][j][:1] == whosTurn:
-                validMove = isThisAValidmove(str(chr(i + 97)) + str(j + 1), str(chr(kingY + 97)) + str(kingX + 1))
+                validMove = isThisAValidmove(
+                    str(chr(i + 97)) + str(j + 1), str(chr(kingY + 97)) + str(kingX + 1))
                 if validMove:
                     attackingPieces = attackingPieces + 1
 
@@ -788,21 +804,27 @@ def inCheckMate(kingY, kingX, attackingPieces):
 
     for i in range(3):
         if isThisAValidmove(str(chr(kingY + 97)) + str(kingX + 1), str(chr(kingY + 97)) + str(kingX + 1 + (i - 1))):
-            movepiece(str(chr(kingY + 97)) + str(kingX + 1), str(chr(kingY + 97)) + str(kingX + 1 + (i - 1)))
+            movepiece(str(chr(kingY + 97)) + str(kingX + 1),
+                      str(chr(kingY + 97)) + str(kingX + 1 + (i - 1)))
             validMove = amINotInCheck()
-            undoLastMove(str(chr(kingY + 97)) + str(kingX + 1), str(chr(kingY + 97)) + str(kingX + 1 + (i - 1)))
+            undoLastMove(str(chr(kingY + 97)) + str(kingX + 1),
+                         str(chr(kingY + 97)) + str(kingX + 1 + (i - 1)))
 
     for i in range(3):
         if isThisAValidmove(str(chr(kingY + 97)) + str(kingX + 1), str(chr(kingY + 98)) + str(kingX + 1 + (i - 1))):
-            movepiece(str(chr(kingY + 97)) + str(kingX + 1), str(chr(kingY + 98)) + str(kingX + 1 + (i - 1)))
+            movepiece(str(chr(kingY + 97)) + str(kingX + 1),
+                      str(chr(kingY + 98)) + str(kingX + 1 + (i - 1)))
             validMove = amINotInCheck()
-            undoLastMove(str(chr(kingY + 97)) + str(kingX + 1), str(chr(kingY + 98)) + str(kingX + 1 + (i - 1)))
+            undoLastMove(str(chr(kingY + 97)) + str(kingX + 1),
+                         str(chr(kingY + 98)) + str(kingX + 1 + (i - 1)))
 
     for i in range(3):
         if isThisAValidmove(str(chr(kingY + 97)) + str(kingX + 1), str(chr(kingY + 96)) + str(kingX + 1 + (i - 1))):
-            movepiece(str(chr(kingY + 97)) + str(kingX + 1), str(chr(kingY + 96)) + str(kingX + 1 + (i - 1)))
+            movepiece(str(chr(kingY + 97)) + str(kingX + 1),
+                      str(chr(kingY + 96)) + str(kingX + 1 + (i - 1)))
             validMove = amINotInCheck()
-            undoLastMove(str(chr(kingY + 97)) + str(kingX + 1), str(chr(kingY + 96)) + str(kingX + 1 + (i - 1)))
+            undoLastMove(str(chr(kingY + 97)) + str(kingX + 1),
+                         str(chr(kingY + 96)) + str(kingX + 1 + (i - 1)))
 
     """The king moving is the only way out of check if more than 1 piece is attacking it directly"""
     """If king has no valid moves check if the 1 attacking piece can either be taken or blocked"""
@@ -816,7 +838,8 @@ def inCheckMate(kingY, kingX, attackingPieces):
                     if Board[i][j][:1] == whosTurn:
                         """Check if any piece can take the oppossing attacking piece,
                         this is done by calling isThisAValidMove() on every piece in your team to the attacking square"""
-                        validMove = isThisAValidmove(str(chr(i + 97)) + str(j + 1), moveto)
+                        validMove = isThisAValidmove(
+                            str(chr(i + 97)) + str(j + 1), moveto)
                         if validMove:
                             """If it is a valid move to take the attacking piece makesure that doing so does not put you in check from somewhere else"""
                             movepiece(str(chr(i + 97)) + str(j + 1), moveto)
@@ -829,12 +852,14 @@ def inCheckMate(kingY, kingX, attackingPieces):
                             spacestoblock = createListOfSpacesInBetween2Pieces(moveto, str(chr(kingY + 97)) + str(
                                 int(kingX + 1)))
                             for x in spacestoblock:
-                                validMove = isThisAValidmove(str(chr(i + 97)) + str(j + 1), x)
+                                validMove = isThisAValidmove(
+                                    str(chr(i + 97)) + str(j + 1), x)
                                 if validMove:
                                     """If it is a valid move to take the attacking piece makesure that doing so does not put you in check from somewhere else"""
                                     movepiece(str(chr(i + 97)) + str(j + 1), x)
                                     validMove = amINotInCheck()
-                                    undoLastMove(str(chr(i + 97)) + str(j + 1), x)
+                                    undoLastMove(
+                                        str(chr(i + 97)) + str(j + 1), x)
                                 if validMove:
                                     break
 
@@ -893,7 +918,7 @@ def createlistofvalidmoves(colour):
     bestmove = -1
     counter = -1
 
-    whosTurn = "b"
+    whosTurn = colour
 
     listofvalidmoves = []
     for i in range(8):
@@ -903,9 +928,11 @@ def createlistofvalidmoves(colour):
                     for l in range(8):
                         checkincheck = True
                         if isThisAValidmove(str(chr(i + 97)) + str(j + 1), str(chr(k + 97)) + str(l + 1)):
-                            movepiece(str(chr(i + 97)) + str(j + 1), str(chr(k + 97)) + str(l + 1))
+                            movepiece(str(chr(i + 97)) + str(j + 1),
+                                      str(chr(k + 97)) + str(l + 1))
                             validMove = amINotInCheck()
-                            undoLastMove(str(chr(i + 97)) + str(j + 1), str(chr(k + 97)) + str(l + 1))
+                            undoLastMove(str(chr(i + 97)) + str(j + 1),
+                                         str(chr(k + 97)) + str(l + 1))
                             if validMove:
                                 listofvalidmoves.append(
                                     str(chr(i + 97)) + str(j + 1) + "," + str(chr(k + 97)) + str(l + 1))
@@ -913,48 +940,42 @@ def createlistofvalidmoves(colour):
     checkincheck = False
     return listofvalidmoves
 
-    # if len(listofvalidmoves) == 0:
-    #     print("NO VALID MOVES")
-    # else:
-    #     for x in listofvalidmoves:
-    #         counter = counter + 1
-    #         movepiece(x[:2], x[3:])
-    #         currentscore = evaluateboard()
-    #         if currentscore < defaultboardscore:
-    #             defaultboardscore = currentscore
-    #             bestmove = counter
-    #         undoLastMove(x[:2], x[3:])
-    #     if bestmove != -1:
-    #         movepiece(listofvalidmoves[bestmove][:2], listofvalidmoves[bestmove][3:])
-    #     else:
-    #         randomMove = random.randint(0, len(listofvalidmoves) - 1)
-    #         print(randomMove)
-    #         movepiece(listofvalidmoves[randomMove][:2], listofvalidmoves[randomMove][3:])
-    # checkincheck = False
 
-
-def minimax(depth, colour, isMaximizingPlayer):
+def minimax(depth, colour, isMaximizingPlayer, alpha, beta):
 
   #base case to terminate recursion
   if depth == 0:
     boardvalue = evaluateboard()
-    return(boardvalue) # might need to return NULL as well
+    return(boardvalue)
 
   bestMove = None
   possiblemoves = createlistofvalidmoves(colour)
+
+
   if isMaximizingPlayer:
     best = float("-inf")
     for x in possiblemoves:
         movepiece(x[:2], x[3:])
-        best = max(best,minimax(depth-1,'W',not isMaximizingPlayer))
+        best = max(best, minimax(
+            depth-1, 'b', not isMaximizingPlayer, alpha, beta))
         undoLastMove(x[:2], x[3:])
+
+        alpha = max(alpha, best)
+
+        #alpha beta pruning
+        if beta <= alpha:
+            break
     return best
   else:
     best = float("inf")
     for x in possiblemoves:
         movepiece(x[:2], x[3:])
-        best = min(best,minimax(depth-1,'b',not isMaximizingPlayer))
+        best = min(best, minimax(
+            depth-1, 'W', not isMaximizingPlayer, alpha, beta))
         undoLastMove(x[:2], x[3:])
+        beta = min(beta, best)
+        if beta <= alpha:
+            break
     return best
 
 
@@ -963,24 +984,23 @@ def findBestMove():
     bestMove = ""
     bestVal = float("inf")
 
-    possiblemoves = createlistofvalidmoves(whosTurn)
+    if whosTurn == 'W':
+        possiblemoves = createlistofvalidmoves('b')
+    else:
+        possiblemoves = createlistofvalidmoves('W')
+
     for x in possiblemoves:
         movepiece(x[:2], x[3:])
-        moveVal = minimax(0,'W',False)
+        moveVal = minimax(2, 'W', True, float("-inf"), float("inf"))
         undoLastMove(x[:2], x[3:])
 
         if moveVal < bestVal:
             bestMove = x
             bestVal = moveVal
 
-    print(bestMove)
-    print(bestVal)
+    #print(bestMove)
+    #print(bestVal)
     return bestMove
-
-
-
-
-
 
 
 def evaluateboard():
@@ -1028,8 +1048,10 @@ while not gameOver:
 
     while not validmove:
         while not validCoords:
-            movefrom = input("Please enter the coordinates of the piece you are moving, column first, eg. e2 \n").lower()
-            moveto = input("Please enter the coordinates of where you wish to move to, column first, eg. e4 ").lower()
+            movefrom = input(
+                "Please enter the coordinates of the piece you are moving, column first, eg. e2 \n").lower()
+            moveto = input(
+                "Please enter the coordinates of where you wish to move to, column first, eg. e4 ").lower()
             validCoords = isThisAValidmove(movefrom, moveto)
             if not validCoords:
                 print(errormessage)
@@ -1060,7 +1082,6 @@ while not gameOver:
     #find best move for opposition (ie.black, minimizing)
     oppositionMove = findBestMove()
     movepiece(oppositionMove[:2], oppositionMove[3:])
-    #createlistofvalidmoves(whosTurn)
 
     if not gameOver:
         scores()
