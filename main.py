@@ -7,7 +7,22 @@ gameOver = False  # Holds True i uits, used to terminate game loop
 validCoords = False
 castled = False
 checkincheck = False
+playermove = True
 castlingallowed = 0b00000000
+castlingallowedsaved = 0b00000000  # save state of castling flags before minimax
+# save state of castling flags after the first move by minimax
+castlingallowedsaved1 = 0b00000000
+# save state of castling flags after second move by minimax
+castlingallowedsaved2 = 0b00000000
+
+""" 10000000 - black castled
+    01000000 - white castled
+    00100000 - black h rank rook moved
+    00010000 - black a rank rook moved
+    00001000 - white h rank rook moved 
+    00000100 - white a rank rook moved
+    00000010 - black king has moved
+    00000001 - white king has moved"""
 errormessage = ""
 movetopiece = "  "
 minimaxcalls = 0
@@ -229,6 +244,8 @@ def isThisAValidmove(movefrom, moveto):
                     errormessage = "Please select a piece on the board"
                     return False
             else:
+                if playermove:
+                    print(movefrom, moveto)
                 errormessage = "Cannot move to the same square"
                 return False
         else:
@@ -321,6 +338,7 @@ def kingValidMove(movefrom, moveto):
                             castlingallowed = castlingallowed | 0b01000000
                         else:
                             castlingallowed = castlingallowed | 0b10000000
+
                         setcastleingflags()
                         castled = True
                         return True
@@ -529,12 +547,12 @@ def castlingvalid():
     global movefrom
     global moveto
 
-    # White castleing Queen side
-
+    # White castleing King side
     if whosTurn == "W":
         if int(ord(moveto[:1])) - int(ord(movefrom[:1])) == 2:
             if castlingallowed & 0b00001001 == 0b00000000:
                 if nothingInTheWay(movefrom, moveto):
+                    #if nothing in the way check if you are moving through check
                     for i in range(8):
                         for j in range(8):
                             if Board[i][j][:1] == "b":
@@ -544,7 +562,7 @@ def castlingvalid():
                                         return False
                                 return True
         else:
-            # White castleing King side
+            # White castleing Queen side
             if castlingallowed & 0b00000101 == 0b00000000:
                 if nothingInTheWay(movefrom, moveto):
                     for i in range(8):
@@ -556,7 +574,7 @@ def castlingvalid():
                                         return False
                                 return True
     else:
-        # Black castleing Queen side
+        # Black castleing King side
         if int(ord(moveto[:1])) - int(ord(movefrom[:1])) == 2:
             if castlingallowed & 0b00100010 == 0b00000000:
                 if nothingInTheWay(movefrom, moveto):
@@ -569,8 +587,8 @@ def castlingvalid():
                                         return False
                                 return True
         else:
-            # Black castleing King side
-            if castlingallowed & 0b00100010 == 0b00000000:
+            # Black castleing Queen side
+            if castlingallowed & 0b000100010 == 0b00000000:
                 if nothingInTheWay(movefrom, moveto):
                     for i in range(8):
                         for j in range(8):
@@ -942,6 +960,7 @@ def createlistofvalidmoves(colour):
 
 
 def minimax(depth, colour, isMaximizingPlayer, alpha, beta):
+  global castlingallowedsaved2
 
   #base case to terminate recursion
   if depth == 0:
@@ -951,11 +970,16 @@ def minimax(depth, colour, isMaximizingPlayer, alpha, beta):
   bestMove = None
   possiblemoves = createlistofvalidmoves(colour)
 
-
   if isMaximizingPlayer:
     best = float("-inf")
     for x in possiblemoves:
+        #maintaining castling flags
+        if depth == 2:
+            castlingallowed = castlingallowedsaved1
+        if depth == 1:
+            castlingallowed = castlingallowedsaved2
         movepiece(x[:2], x[3:])
+        castlingallowedsaved2 = castlingallowed
         best = max(best, minimax(
             depth-1, 'b', not isMaximizingPlayer, alpha, beta))
         undoLastMove(x[:2], x[3:])
@@ -969,7 +993,12 @@ def minimax(depth, colour, isMaximizingPlayer, alpha, beta):
   else:
     best = float("inf")
     for x in possiblemoves:
+        if depth == 2:
+            castlingallowed = castlingallowedsaved1
+        if depth == 1:
+            castlingallowed = castlingallowedsaved2
         movepiece(x[:2], x[3:])
+        castlingallowedsaved2 = castlingallowed
         best = min(best, minimax(
             depth-1, 'W', not isMaximizingPlayer, alpha, beta))
         undoLastMove(x[:2], x[3:])
@@ -990,7 +1019,10 @@ def findBestMove():
         possiblemoves = createlistofvalidmoves('W')
 
     for x in possiblemoves:
+        castlingallowed = castlingallowedsaved
         movepiece(x[:2], x[3:])
+        castlingallowedsaved1 = castlingallowed
+        castlingallowedsaved2 = castlingallowed
         moveVal = minimax(2, 'W', True, float("-inf"), float("inf"))
         undoLastMove(x[:2], x[3:])
 
@@ -1009,22 +1041,35 @@ def evaluateboard():
     for i in range(8):
         for j in range(8):
             if (Board[i][j])[:1] == "W":
-                if (Board[i][j])[1:] == "R":
+                #need to add in check for empty rank or file for rook
+                if (Board[i][j])[1:] == "R" and ((i > 2 and i < 7) and (j > 2 and j < 7)):
+                    boardvalue = boardvalue + 5 * i * j * 0.5
+                elif (Board[i][j])[1:] == "R" and (i > 6 and i < 3) and (j > 6 and j < 3):
                     boardvalue = boardvalue + 5
-                elif (Board[i][j])[1:] == "N" or (Board[i][j])[1:] == "B":
+                elif (Board[i][j])[1:] == "N" or (Board[i][j])[1:] == "B" and (i > 2 and i < 7) and (j > 2 and j < 7):
+                    boardvalue = boardvalue + 3 * i * j * 0.5
+                elif (Board[i][j])[1:] == "N" or (Board[i][j])[1:] == "B" and (i > 6 and i < 3) and (j > 6 and j < 3):
                     boardvalue = boardvalue + 3
-                elif (Board[i][j])[1:] == "Q":
+                if (Board[i][j])[1:] == "Q" and (i > 2 and i < 7) and (j > 2 and j < 7):
+                    boardvalue = boardvalue + 9 * i * j * 0.5
+                elif (Board[i][j])[1:] == "Q" and (i > 6 and i < 3) and (j > 6 and j < 3):
                     boardvalue = boardvalue + 9
                 elif (Board[i][j])[1:] == "K":
                     boardvalue = boardvalue + 1000
                 else:
                     boardvalue = boardvalue + 1
             elif (Board[i][j])[:1] == "b":
-                if (Board[i][j])[1:] == "r":
+                if (Board[i][j])[1:] == "r" and (i > 2 and i < 7) and (j > 2 and j < 7):
+                    boardvalue = boardvalue - 5 * i * j * 0.5
+                elif (Board[i][j])[1:] == "r" and (i > 6 and i < 3) and (j > 6 and j < 3):
                     boardvalue = boardvalue - 5
-                elif (Board[i][j])[1:] == "n" or (Board[i][j])[1:] == "b":
+                elif (Board[i][j])[1:] == "n" or (Board[i][j])[1:] == "b" and (i > 2 and i < 7) and (j > 2 and j < 7):
+                    boardvalue = boardvalue - 3 * i * j * 0.5
+                elif (Board[i][j])[1:] == "n" or (Board[i][j])[1:] == "b" and (i > 6 and i < 3) and (j > 6 and j < 3):
                     boardvalue = boardvalue - 3
-                elif (Board[i][j])[1:] == "q":
+                if (Board[i][j])[1:] == "q" and (i > 2 and i < 7) and (j > 2 and j < 7):
+                    boardvalue = boardvalue - 9 * i * j * 0.5
+                elif (Board[i][j])[1:] == "q" and (i > 6 and i < 3) and (j > 6 and j < 3):
                     boardvalue = boardvalue - 9
                 elif (Board[i][j])[1:] == "k":
                     boardvalue = boardvalue - 1000
@@ -1035,12 +1080,13 @@ def evaluateboard():
 
 
 initialiseboard()
-# testinitialiseboardcastleing()
+#testinitialiseboardcastleing()
 # testinitialiseboardpawnpromotion()
 # testinitialiseboardcheck()
 drawboard()
 
 while not gameOver:
+    playermove = True
     if whosTurn == 'W':
         print("\n WHITE'S TURN \n")
     else:
@@ -1079,8 +1125,12 @@ while not gameOver:
     validmove = False
     inCheck()
     drawboard()
+    playermove = False
+    castlingallowedsaved = castlingallowed
+    input()
     #find best move for opposition (ie.black, minimizing)
     oppositionMove = findBestMove()
+    castlingallowed = castlingallowedsaved
     movepiece(oppositionMove[:2], oppositionMove[3:])
 
     if not gameOver:
