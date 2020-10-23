@@ -7,6 +7,7 @@ gameOver = False  # Holds True i uits, used to terminate game loop
 validCoords = False
 castled = False
 checkincheck = False
+inCheckFlag = False
 playermove = True
 castlingallowed = 0b00000000
 castlingallowedsaved = 0b00000000  # save state of castling flags before minimax
@@ -14,6 +15,8 @@ castlingallowedsaved = 0b00000000  # save state of castling flags before minimax
 castlingallowedsaved1 = 0b00000000
 # save state of castling flags after second move by minimax
 castlingallowedsaved2 = 0b00000000
+# save state of castling flags after third move by minimax
+castlingallowedsaved3 = 0b00000000
 
 """ 10000000 - black castled
     01000000 - white castled
@@ -244,8 +247,6 @@ def isThisAValidmove(movefrom, moveto):
                     errormessage = "Please select a piece on the board"
                     return False
             else:
-                if playermove:
-                    print(movefrom, moveto)
                 errormessage = "Cannot move to the same square"
                 return False
         else:
@@ -441,7 +442,6 @@ def pawnValidMove(movefrom, moveto):
                     if Board[int(ord(moveto[:1])) - 97][(int(moveto[1:]) - 1)][:1] != "b":
                         if checkincheck == False:
                             if movefrom[1:] == "7":
-                                print("HERE : " + str(checkincheck))
                                 pawnpromotion()
                                 return True
                         return True
@@ -455,7 +455,6 @@ def pawnValidMove(movefrom, moveto):
                 if Board[int(ord(moveto[:1])) - 97][int(moveto[1:]) - 1][:1] == "b":
                     if checkincheck == False:
                         if movefrom[1:] == "7":
-                            print("HERE1 : " + str(checkincheck))
                             pawnpromotion()
                             return True
                     return True
@@ -486,7 +485,6 @@ def pawnValidMove(movefrom, moveto):
                     if Board[int(ord(moveto[:1])) - 97][int(moveto[1:]) - 1][:1] != "W":
                         if checkincheck == False:
                             if movefrom[1:] == "2":
-                                print("HERE2 : " + str(checkincheck))
                                 pawnpromotion()
                                 return True
                         return True
@@ -500,7 +498,6 @@ def pawnValidMove(movefrom, moveto):
             if Board[int(ord(moveto[:1])) - 97][int(moveto[1:]) - 1][:1] == "W":
                 if checkincheck == False:
                     if movefrom[1:]:
-                        print("HERE3 : " + str(checkincheck))
                         pawnpromotion()
                         return True
                 return True
@@ -546,12 +543,14 @@ def castlingvalid():
 
     global movefrom
     global moveto
+    global whosTurn
 
     # White castleing King side
     if whosTurn == "W":
         if int(ord(moveto[:1])) - int(ord(movefrom[:1])) == 2:
             if castlingallowed & 0b00001001 == 0b00000000:
                 if nothingInTheWay(movefrom, moveto):
+                    whosTurn = "b"
                     #if nothing in the way check if you are moving through check
                     for i in range(8):
                         for j in range(8):
@@ -559,45 +558,56 @@ def castlingvalid():
                                 for k in range(3):
                                     if isThisAValidmove(str(chr(i + 97)) + str(j + 1),
                                                         chr(int(ord(movefrom[:1])) + k) + movefrom[1:]):
+                                        whosTurn = "W"
                                         return False
-                                return True
+                    whosTurn = "W"
+                    return True
         else:
             # White castleing Queen side
             if castlingallowed & 0b00000101 == 0b00000000:
                 if nothingInTheWay(movefrom, moveto):
+                    whosTurn = "b"
                     for i in range(8):
                         for j in range(8):
                             if Board[i][j][:1] == "b":
                                 for k in range(3):
                                     if isThisAValidmove(str(chr(i + 97)) + str(j + 1),
                                                         chr(int(ord(movefrom[:1])) - k) + movefrom[1:]):
+                                        whosTurn = "W"
                                         return False
-                                return True
+                    whosTurn = "W"
+                    return True
     else:
         # Black castleing King side
         if int(ord(moveto[:1])) - int(ord(movefrom[:1])) == 2:
             if castlingallowed & 0b00100010 == 0b00000000:
                 if nothingInTheWay(movefrom, moveto):
+                    whosTurn = "W"
                     for i in range(8):
                         for j in range(8):
                             if Board[i][j][:1] == "W":
                                 for k in range(3):
                                     if isThisAValidmove(str(chr(i + 97)) + str(j + 1),
                                                         chr(int(ord(movefrom[:1]) + k)) + movefrom[1:]):
+                                        whosTurn = "b"
                                         return False
-                                return True
+                    whosTurn = "b"
+                    return True
         else:
             # Black castleing Queen side
             if castlingallowed & 0b000100010 == 0b00000000:
                 if nothingInTheWay(movefrom, moveto):
+                    whosTurn = "W"
                     for i in range(8):
                         for j in range(8):
                             if Board[i][j][:1] == "W":
                                 for k in range(3):
                                     if isThisAValidmove(str(chr(i + 97)) + str(j + 1),
                                                         chr(int(ord(movefrom[:1]) - k)) + movefrom[1:]):
+                                        whosTurn = "b"
                                         return False
-                                return True
+                    whosTurn = "b"
+                    return True
 
 
 """This routine checks there is no piece inbetween the start square and destination square for rook,bishop, queen or pawn moving 2 squares"""
@@ -821,27 +831,31 @@ def inCheckMate(kingY, kingX, attackingPieces):
     """Check if the king has a valid move to any of the 8 surrounding squares"""
 
     for i in range(3):
-        if isThisAValidmove(str(chr(kingY + 97)) + str(kingX + 1), str(chr(kingY + 97)) + str(kingX + 1 + (i - 1))):
-            movepiece(str(chr(kingY + 97)) + str(kingX + 1),
+        if not validMove:
+            if isThisAValidmove(str(chr(kingY + 97)) + str(kingX + 1), str(chr(kingY + 97)) + str(kingX + 1 + (i - 1))):
+                movepiece(str(chr(kingY + 97)) + str(kingX + 1),
                       str(chr(kingY + 97)) + str(kingX + 1 + (i - 1)))
-            validMove = amINotInCheck()
-            undoLastMove(str(chr(kingY + 97)) + str(kingX + 1),
+                validMove = amINotInCheck()
+                undoLastMove(str(chr(kingY + 97)) + str(kingX + 1),
                          str(chr(kingY + 97)) + str(kingX + 1 + (i - 1)))
 
-    for i in range(3):
-        if isThisAValidmove(str(chr(kingY + 97)) + str(kingX + 1), str(chr(kingY + 98)) + str(kingX + 1 + (i - 1))):
-            movepiece(str(chr(kingY + 97)) + str(kingX + 1),
+    if not validMove:
+        for i in range(3):
+            if not validMove:
+                if isThisAValidmove(str(chr(kingY + 97)) + str(kingX + 1), str(chr(kingY + 98)) + str(kingX + 1 + (i - 1))):
+                    movepiece(str(chr(kingY + 97)) + str(kingX + 1),
                       str(chr(kingY + 98)) + str(kingX + 1 + (i - 1)))
-            validMove = amINotInCheck()
-            undoLastMove(str(chr(kingY + 97)) + str(kingX + 1),
+                    validMove = amINotInCheck()
+                    undoLastMove(str(chr(kingY + 97)) + str(kingX + 1),
                          str(chr(kingY + 98)) + str(kingX + 1 + (i - 1)))
-
-    for i in range(3):
-        if isThisAValidmove(str(chr(kingY + 97)) + str(kingX + 1), str(chr(kingY + 96)) + str(kingX + 1 + (i - 1))):
-            movepiece(str(chr(kingY + 97)) + str(kingX + 1),
+    if not validMove:
+        for i in range(3):
+            if not validMove:
+                if isThisAValidmove(str(chr(kingY + 97)) + str(kingX + 1), str(chr(kingY + 96)) + str(kingX + 1 + (i - 1))):
+                    movepiece(str(chr(kingY + 97)) + str(kingX + 1),
                       str(chr(kingY + 96)) + str(kingX + 1 + (i - 1)))
-            validMove = amINotInCheck()
-            undoLastMove(str(chr(kingY + 97)) + str(kingX + 1),
+                    validMove = amINotInCheck()
+                    undoLastMove(str(chr(kingY + 97)) + str(kingX + 1),
                          str(chr(kingY + 96)) + str(kingX + 1 + (i - 1)))
 
     """The king moving is the only way out of check if more than 1 piece is attacking it directly"""
@@ -1018,6 +1032,9 @@ def findBestMove():
     else:
         possiblemoves = createlistofvalidmoves('W')
 
+    if possiblemoves == []:
+        return "stalemate"
+
     for x in possiblemoves:
         castlingallowed = castlingallowedsaved
         movepiece(x[:2], x[3:])
@@ -1030,29 +1047,33 @@ def findBestMove():
             bestMove = x
             bestVal = moveVal
 
-    #print(bestMove)
-    #print(bestVal)
+    if bestVal == float("inf"):
+        return possiblemoves[0]
+
     return bestMove
 
 
 def evaluateboard():
     boardvalue = 0
 
+    #empty rank or file for rook
+    #no of pieces attacking one square
+    #
+
     for i in range(8):
         for j in range(8):
             if (Board[i][j])[:1] == "W":
-                #need to add in check for empty rank or file for rook
                 if (Board[i][j])[1:] == "R" and ((i > 2 and i < 7) and (j > 2 and j < 7)):
                     boardvalue = boardvalue + 5 * i * j * 0.5
-                elif (Board[i][j])[1:] == "R" and (i > 6 and i < 3) and (j > 6 and j < 3):
+                elif (Board[i][j])[1:] == "R" and ((i > 6 or i < 3) or (j > 6 or j < 3)):
                     boardvalue = boardvalue + 5
-                elif (Board[i][j])[1:] == "N" or (Board[i][j])[1:] == "B" and (i > 2 and i < 7) and (j > 2 and j < 7):
+                elif ((Board[i][j])[1:] == "N" or (Board[i][j])[1:] == "B") and (i > 2 and i < 7) and (j > 2 and j < 7):
                     boardvalue = boardvalue + 3 * i * j * 0.5
-                elif (Board[i][j])[1:] == "N" or (Board[i][j])[1:] == "B" and (i > 6 and i < 3) and (j > 6 and j < 3):
+                elif ((Board[i][j])[1:] == "N" or (Board[i][j])[1:] == "B") and ((i > 6 or i < 3) or (j > 6 or j < 3)):
                     boardvalue = boardvalue + 3
-                if (Board[i][j])[1:] == "Q" and (i > 2 and i < 7) and (j > 2 and j < 7):
+                elif (Board[i][j])[1:] == "Q" and (i > 2 and i < 7) and (j > 2 and j < 7):
                     boardvalue = boardvalue + 9 * i * j * 0.5
-                elif (Board[i][j])[1:] == "Q" and (i > 6 and i < 3) and (j > 6 and j < 3):
+                elif (Board[i][j])[1:] == "Q" and ((i > 6 or i < 3) or (j > 6 or j < 3)):
                     boardvalue = boardvalue + 9
                 elif (Board[i][j])[1:] == "K":
                     boardvalue = boardvalue + 1000
@@ -1061,15 +1082,15 @@ def evaluateboard():
             elif (Board[i][j])[:1] == "b":
                 if (Board[i][j])[1:] == "r" and (i > 2 and i < 7) and (j > 2 and j < 7):
                     boardvalue = boardvalue - 5 * i * j * 0.5
-                elif (Board[i][j])[1:] == "r" and (i > 6 and i < 3) and (j > 6 and j < 3):
+                elif (Board[i][j])[1:] == "r" and ((i > 6 or i < 3) or (j > 6 or j < 3)):
                     boardvalue = boardvalue - 5
-                elif (Board[i][j])[1:] == "n" or (Board[i][j])[1:] == "b" and (i > 2 and i < 7) and (j > 2 and j < 7):
+                elif ((Board[i][j])[1:] == "n" or (Board[i][j])[1:] == "b") and (i > 2 and i < 7) and (j > 2 and j < 7):
                     boardvalue = boardvalue - 3 * i * j * 0.5
-                elif (Board[i][j])[1:] == "n" or (Board[i][j])[1:] == "b" and (i > 6 and i < 3) and (j > 6 and j < 3):
+                elif ((Board[i][j])[1:] == "n" or (Board[i][j])[1:] == "b") and ((i > 6 or i < 3) or (j > 6 or j < 3)):
                     boardvalue = boardvalue - 3
-                if (Board[i][j])[1:] == "q" and (i > 2 and i < 7) and (j > 2 and j < 7):
+                elif (Board[i][j])[1:] == "q" and (i > 2 and i < 7) and (j > 2 and j < 7):
                     boardvalue = boardvalue - 9 * i * j * 0.5
-                elif (Board[i][j])[1:] == "q" and (i > 6 and i < 3) and (j > 6 and j < 3):
+                elif (Board[i][j])[1:] == "q" and ((i > 6 or i < 3) or (j > 6 or j < 3)):
                     boardvalue = boardvalue - 9
                 elif (Board[i][j])[1:] == "k":
                     boardvalue = boardvalue - 1000
@@ -1082,7 +1103,7 @@ def evaluateboard():
 initialiseboard()
 #testinitialiseboardcastleing()
 # testinitialiseboardpawnpromotion()
-# testinitialiseboardcheck()
+#testinitialiseboardcheck()
 drawboard()
 
 while not gameOver:
@@ -1097,7 +1118,7 @@ while not gameOver:
             movefrom = input(
                 "Please enter the coordinates of the piece you are moving, column first, eg. e2 \n").lower()
             moveto = input(
-                "Please enter the coordinates of where you wish to move to, column first, eg. e4 ").lower()
+                "Please enter the coordinates of where you wish to move to, column first, eg. e4 \n").lower()
             validCoords = isThisAValidmove(movefrom, moveto)
             if not validCoords:
                 print(errormessage)
@@ -1124,14 +1145,24 @@ while not gameOver:
             # valid move at this point and not in check
     validmove = False
     inCheck()
-    drawboard()
     playermove = False
     castlingallowedsaved = castlingallowed
-    input()
-    #find best move for opposition (ie.black, minimizing)
-    oppositionMove = findBestMove()
-    castlingallowed = castlingallowedsaved
-    movepiece(oppositionMove[:2], oppositionMove[3:])
+
+    if not gameOver:
+        #find best move for opposition (ie.black, minimizing)
+        oppositionMove = findBestMove()
+        castlingallowed = castlingallowedsaved
+        if oppositionMove == "stalemate":
+            print("STALEMATE")
+            gameOver = True
+            drawboard()
+        else:
+            movepiece(oppositionMove[:2], oppositionMove[3:])
+            #drawboard()
+            inCheck()
+    else:
+        drawboard()
+
 
     if not gameOver:
         scores()
